@@ -13,43 +13,61 @@ var width = 1400,
           if (error) throw error;
 
     var nodesByName = {};
-
-    // Create nodes for each unique source and target.
-    links.forEach(function(link) {
-          link.source = nodeByName(link.source);
-          link.target = nodeByName(link.target);
+	links.forEach(function(graphs){
+		graphs.forEach(function(point){
+			point.source = nodeByName(link.seqnum, point.source);
+		  	point.target = nodeByName(link.seqnum, point.target);
+		});
+	});
+	
+	  function nodeByName(seqnum, name) {
+	  	if(nodesByName[seqnum] == null){nodesByName[seqnum] = {};}
+		return nodesByName[seqnum][name] || (nodesByName[seqnum][name] = {name: name});
+	  }
+	//##########3333
+	
+    // Extract the array of nodes from the map by name.
+    var nodes = {};
+    nodesByName.forEach(function(seqnum){
+    	nodes[seqnum] = d3.values(nodesByName[seqnum]);
     });
 
-    // Extract the array of nodes from the map by name.
-    var nodes = d3.values(nodesByName);
-
     // Create the link lines.
-    var link = svg.selectAll(".link")
-                .data(links)
+    var link = {};
+    links.forEach(function(seqnum){
+    	link[seqnum] = svg.selectAll(".link")
+                .data(links[seqnum])
                 .enter().append("line")
                 .style("stroke", linkColour)
                 .attr("class", "link");
+    });
 
     // Create the node circles.
-    var node = svg.selectAll(".node")
-                .data(nodes)
+    var node = {};
+    nodes.forEach(function(seqnum){
+    	node = svg.selectAll(".node")
+                .data(nodes[seqnum])
                 .enter().append("circle")
                 .attr("class", "node")
                 .attr("r", 20)
                 .attr("fill", circleColour)
                 .call(force.drag);
 
+    });
       
 
     // Start the force layout.
-    force
-      .gravity(0)
-      .linkStrength(1)
-      .linkDistance(height/7)
-      .nodes(nodes)
-      .links(links)
-      .on("tick", tick)
-      .start();
+    nodes.forEach(function(seqnum){
+	    force
+		  .gravity(0)
+		  .linkStrength(1)
+		  .linkDistance(height/7)
+		  .nodes(nodes[seqnum])
+		  .links(links[seqnum])
+		  .on("tick", tick)
+		  .start();
+    });
+
 
 
     function circleColour(d){
@@ -79,7 +97,4 @@ var width = 1400,
         .attr("cy", function(d) { return d.y; });
   }
 
-  function nodeByName(name) {
-    return nodesByName[name] || (nodesByName[name] = {name: name});
-  }
 });
